@@ -8,6 +8,7 @@ export default defineConfig({
   migrations: {
     path: "dist/migrations",
     pathTs: "src/migrations",
+    disableForeignKeys: false,
   },
   dbName: process.env.DB_NAME || "auth",
   clientUrl:

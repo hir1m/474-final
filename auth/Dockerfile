@@ -8,8 +8,8 @@ COPY package.json .
 COPY yarn.lock .
 RUN yarn install
 
-COPY dist .
-COPY mikro-orm.config.ts .
+COPY . .
+RUN yarn build
 RUN yarn install --production=true
 
 EXPOSE ${PORT}

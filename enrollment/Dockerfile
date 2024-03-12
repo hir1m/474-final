@@ -8,7 +8,7 @@ COPY package.json .
 COPY yarn.lock .
 RUN yarn install --production=true
 
-COPY dist .
+COPY dist /usr/app/enrollment/dist
 
 EXPOSE ${PORT}
 ENTRYPOINT ["yarn", "start"]

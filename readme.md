@@ -30,7 +30,7 @@ You will need to run `yarn install` and setup `mikro-orm.config.ts` with the cor
 
 **ENV Variables:**
 
-`DB_NAME`: Name of the PG DB, preferably `course` / `enrollment`
+`DB_NAME`: Name of the GCP DB, preferably `course` / `enrollment`
 
 `NODE_ENV`: Set to `production` if prod
 
@@ -55,3 +55,7 @@ Not required, GCP will auto populate
 `NODE_ENV`: Set to `production` if prod
 
 `PORT`: Usually set by GCP
+
+**Note about build:**
+
+It is better to build on docker container on your local machine (with production env) and then push to your docker hub before deploying, since docker has some issues detecting build args
