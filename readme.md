@@ -50,7 +50,7 @@ Not required, GCP will auto populate
 
 **ENV Variables:**
 
-`AUTH_URL` / `COURSE_URL` / `ENROLLMENT_URL`: API endpoints of the 3 microservices, these are required
+`NEXT_PUBLIC_AUTH_URL` / `NEXT_PUBLIC_COURSE_URL` / `NEXT_PUBLIC_ENROLLMENT_URL`: API endpoints of the 3 microservices, these are required
 
 `NODE_ENV`: Set to `production` if prod
 

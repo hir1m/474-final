@@ -81,3 +81,28 @@ services:
       - 5007:5007
     links:
       - "datastore:datastore"
+
+  webworker:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    environment:
+      PORT: 5008
+      NODE_ENV: production
+      NEXT_PUBLIC_AUTH_URL: http://auth:5005
+      NEXT_PUBLIC_COURSE_URL: http://course:5006
+      NEXT_PUBLIC_ENROLLMENT_URL: http://enrollment:5007
+
+    volumes:
+      - ./web:/usr/app/web
+      - /usr/app/web/node_modules
+    depends_on:
+      - auth
+      - course
+      - enrollment
+    ports:
+      - 5008:5008
+    links:
+      - "auth:auth"
+      - "course:course"
+      - "enrollment:enrollment"

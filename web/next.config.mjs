@@ -1,19 +1,18 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   rewrites: async () => {
-    console.log(process.env.COURSE_URL);
     return [
       {
         source: "/api/auth/:path*",
-        destination: `${process.env.AUTH_URL}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_AUTH_URL}/:path*`,
       },
       {
         source: "/api/course/:path*",
-        destination: `${process.env.COURSE_URL}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_COURSE_URL}/:path*`,
       },
       {
         source: "/api/enrollment/:path*",
-        destination: `${process.env.ENROLLMENT_URL}/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_ENROLLMENT_URL}/:path*`,
       },
     ];
   },

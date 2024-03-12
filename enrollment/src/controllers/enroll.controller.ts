@@ -12,7 +12,7 @@ router.post("/", async (req, res) => {
 
   const query_c = DI.db
     .createQuery("capacity")
-    .filter(new PropertyFilter("course_uuid", "=", uuid));
+    .filter(new PropertyFilter("uuid", "=", uuid));
   const [capacity] = await DI.db.runQuery(query_c);
 
   if (capacity.length == 0) {
@@ -26,7 +26,7 @@ router.post("/", async (req, res) => {
     key: capacity_key,
     data: {
       uuid: capacity[0].uuid,
-      capacity: capacity[0].value,
+      value: capacity[0].value,
       current: capacity[0].current + 1,
       owner: capacity[0].owner,
     },

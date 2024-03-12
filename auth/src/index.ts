@@ -5,6 +5,7 @@ import {
   RequestContext,
 } from "@mikro-orm/postgresql";
 import express from "express";
+import cookieParser from "cookie-parser";
 import http from "http";
 import { User } from "./entities/user.entity";
 import { RootController } from "./controllers";
@@ -28,6 +29,7 @@ export const main = (async () => {
   const app = express();
   // app.use(cors());
   app.use(express.json());
+  app.use(cookieParser());
   app.use((req, res, next) => RequestContext.create(DI.orm.em, next));
   app.use("/", RootController);
   app.use((req, res) => res.status(404).json({ message: "No route found" }));

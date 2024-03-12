@@ -2,7 +2,7 @@ import { Request, Response, Router } from "express";
 import { DI } from "..";
 import bcrypt from "bcrypt";
 import { UserRole } from "../entities/user.entity";
-import { sign } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
 
 const router = Router();
 const SALT_ROUNDS = 15;
@@ -33,7 +33,7 @@ router.post("/create", async (req, res) => {
   }
 });
 
-router.post("/auth", async (req, res) => {
+router.post("/normal", async (req, res) => {
   const { name, password } = req.body;
   if (!name || !password) {
     return res.status(400).json({ message: "name or password is undefined" });
@@ -54,14 +54,40 @@ router.post("/auth", async (req, res) => {
       { expiresIn: "7d" }
     );
 
-    const cookieExpiry = new Date(new Date().getTime() + 86400 * 7);
+    const cookieExpiry = new Date(new Date().getTime() + 86400 * 1000 * 7);
     // return res.status(200).json({ authToken });
-    return res.cookie("token", authToken, {
-      expires: cookieExpiry,
-      httpOnly: true,
-    });
+    return res
+      .status(200)
+      .cookie("token", authToken, {
+        expires: cookieExpiry,
+        httpOnly: true,
+      })
+      .send({ message: "success" });
   } catch (e: any) {
     return res.status(400).json({ message: e.message });
+  }
+});
+
+router.post("/silent", async (req, res) => {
+  const authToken = req.cookies.token;
+
+  if (!authToken) {
+    return res.status(401).json({ message: "silent auth failed" });
+  }
+
+  try {
+    const user = verify(authToken, JWT_SECRET);
+    const cookieExpiry = new Date(new Date().getTime() + 86400 * 1000 * 7);
+    // return res.status(200).json({ authToken });
+    return res
+      .status(200)
+      .cookie("token", authToken, {
+        expires: cookieExpiry,
+        httpOnly: true,
+      })
+      .send({ message: "silent auth success" });
+  } catch (e: any) {
+    res.status(401).json({ message: "silent auth failed" });
   }
 });
 

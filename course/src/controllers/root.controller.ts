@@ -6,7 +6,7 @@ import { PropertyFilter } from "@google-cloud/datastore";
 const router = Router();
 
 router.get("/all", async (req, res) => {
-  const query = DI.db.createQuery("courses");
+  const query = DI.db.createQuery("course");
   const [courses] = await DI.db.runQuery(query);
   return res.status(200).json(courses);
 });
@@ -17,6 +17,9 @@ router.post("/create", async (req, res) => {
   }
 
   const { code, description } = req.body;
+  if (!code || !description) {
+    return res.status(400).json({ message: "code/description is missing" });
+  }
   const uuid = randomUUID();
 
   try {
