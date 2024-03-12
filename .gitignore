@@ -1,0 +1,14 @@
+.DS_Store
+._.DS_Store
+**/.DS_Store
+**/._.DS_Store
+
+.vscode/
+._.vscode/
+**/.vscode/
+**/._.vscode/
+
+thumbs.db
+._thumbs.db
+**/thumbs.db
+**/._thumbs.db

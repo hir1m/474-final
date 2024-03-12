@@ -1,0 +1,83 @@
+services:
+  postgres:
+    image: postgres:alpine
+    restart: always
+    environment:
+      POSTGRES_USER: auth
+      POSTGRES_DB: auth
+      POSTGRES_PASSWORD: pgpassword
+    expose:
+      - 5432
+    ports:
+      - "5432:5432"
+
+  datastore:
+    image: knarz/datastore-emulator
+    restart: always
+    expose:
+      - 8432
+
+  auth:
+    build:
+      context: ./auth
+      dockerfile: Dockerfile
+    environment:
+      PORT: 5005
+      DB_NAME: auth
+      POSTGRES_URL: postgres://auth:pgpassword@postgres:5432/auth
+
+    volumes:
+      - ./auth:/usr/app/auth
+      - /usr/app/auth/node_modules
+    depends_on:
+      - postgres
+    ports:
+      - 5005:5005
+    links:
+      - "postgres:postgres"
+
+  course:
+    build:
+      context: ./course
+      dockerfile: Dockerfile
+    environment:
+      PORT: 5006
+      NODE_ENV: development
+      DATASTORE_EMULATOR_HOST: datastore:8432
+      DATASTORE_EMULATOR_HOST_PATH: datastore:8432/datastore
+      DATASTORE_HOST: http://datastore:8432
+      DATASTORE_PROJECT_ID: appengine-generated
+      DATASTORE_DATASET: appengine-generated
+
+    volumes:
+      - ./course:/usr/app/course
+      - /usr/app/course/node_modules
+    depends_on:
+      - datastore
+    ports:
+      - 5006:5006
+    links:
+      - "datastore:datastore"
+
+  enrollment:
+    build:
+      context: ./enrollment
+      dockerfile: Dockerfile
+    environment:
+      PORT: 5007
+      NODE_ENV: development
+      DATASTORE_EMULATOR_HOST: datastore:8432
+      DATASTORE_EMULATOR_HOST_PATH: datastore:8432/datastore
+      DATASTORE_HOST: http://datastore:8432
+      DATASTORE_PROJECT_ID: appengine-generated
+      DATASTORE_DATASET: appengine-generated
+
+    volumes:
+      - ./enrollment:/usr/app/enrollment
+      - /usr/app/enrollment/node_modules
+    depends_on:
+      - datastore
+    ports:
+      - 5007:5007
+    links:
+      - "datastore:datastore"
