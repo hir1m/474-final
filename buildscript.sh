@@ -8,6 +8,10 @@ cd ..
 cd enrollment
 yarn install
 cd ..
+cd web
+yarn install
+cd ..
+
 
 echo "building..."
 cd auth
@@ -17,6 +21,9 @@ cd course
 yarn build
 cd ..
 cd enrollment
+yarn build
+cd ..
+cd web
 yarn build
 cd ..
 
