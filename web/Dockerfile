@@ -7,12 +7,11 @@ WORKDIR /usr/app/web
 COPY package.json .
 COPY yarn.lock .
 RUN yarn install
-# scuffed way
-RUN echo -e "NEXT_PUBLIC_AUTH_URL=$NEXT_PUBLIC_AUTH_URL\nNEXT_PUBLIC_COURSE_URL=$NEXT_PUBLIC_COURSE_URL\nNEXT_PUBLIC_ENROLLMENT_URL=$NEXT_PUBLIC_ENROLLMENT_URL\n" >> .env.local
+# scuffed way (does not work, please create a .env.local)
+# RUN echo -e "NEXT_PUBLIC_AUTH_URL=$NEXT_PUBLIC_AUTH_URL\nNEXT_PUBLIC_COURSE_URL=$NEXT_PUBLIC_COURSE_URL\nNEXT_PUBLIC_ENROLLMENT_URL=$NEXT_PUBLIC_ENROLLMENT_URL\n" >> .env.local
 
 COPY . .
-ENV PORT=${PORT}
+# RUN yarn build
 
-RUN yarn build
 EXPOSE ${PORT}
 ENTRYPOINT yarn start -p ${PORT}
