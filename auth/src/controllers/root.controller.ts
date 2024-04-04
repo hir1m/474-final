@@ -2,18 +2,12 @@ import { Router } from "express";
 import { DI } from "..";
 import bcrypt from "bcrypt";
 import { sign, verify } from "jsonwebtoken";
+import { randomUUID } from "crypto";
+import { PropertyFilter } from "@google-cloud/datastore";
 
 enum UserRole {
   STUDENT = "student",
   ADMIN = "admin",
-}
-
-interface User {
-  key: string;
-  name: string;
-  email: string;
-  password: string;
-  role: UserRole;
 }
 
 const router = Router();
@@ -30,48 +24,60 @@ router.post("/create", async (req, res) => {
 
   // check if user already exists
   try {
-    const [user] = await DI.table.row(`user#${name}`).get();
-    if (user) {
+    const query = DI.db
+      .createQuery("user")
+      .filter(new PropertyFilter("name", "=", name));
+    const [user] = await DI.db.runQuery(query);
+
+    if (user.length > 0) {
       return res.status(400).json({ message: "user already exists" });
     }
   } catch (e: any) {}
 
   try {
-    // const timestamp = new Date().getTime() * 1000;
-    const newUser = {
-      key: `user#${name}`,
-      name,
-      email,
+    const key = DI.db.key("user");
+
+    const user = {
+      key: key,
+      uuid: randomUUID(),
+      name: name,
+      email: email,
       password: await bcrypt.hash(password, SALT_ROUNDS),
       role: UserRole.STUDENT,
-    } as User;
-
-    // insert into bigtable
-
-    const rowToInsert = {
-      key: newUser.key,
-      data: {
-        name: {
-          value: newUser.name,
-        },
-        email: {
-          value: newUser.email,
-        },
-        password: {
-          value: newUser.password,
-        },
-        role: {
-          value: newUser.role,
-        },
-      },
     };
 
-    await DI.table.insert(rowToInsert);
+    await DI.db.save({
+      key: key,
+      data: [
+        {
+          name: "uuid",
+          value: user.uuid,
+        },
+        {
+          name: "name",
+          value: name,
+        },
+        {
+          name: "email",
+          value: email,
+        },
+        {
+          name: "password",
+          value: user.password,
+        },
+        {
+          name: "role",
+          value: user.role,
+        },
+      ],
+    });
+
+    // insert into bigtable
 
     res.status(200).json({ message: "success" });
 
     // cache the user to redis
-    await DI.redis.set(newUser.key, JSON.stringify(newUser), {
+    await DI.redis.set(`#user${name}`, JSON.stringify(user), {
       EX: 86400 * 7,
     });
   } catch (e: any) {
@@ -86,26 +92,26 @@ router.post("/normal", async (req, res) => {
     return res.status(400).json({ message: "name or password is undefined" });
   }
   try {
-    let user: User;
+    let user: any;
 
     // check if user is cached
     const cachedUser = await DI.redis.get(`user#${name}`);
 
     if (cachedUser) {
-      user = JSON.parse(cachedUser) as User;
+      user = JSON.parse(cachedUser);
     } else {
-      const [dbuser] = await DI.table.row(`user#${name}`).get();
+      const query = DI.db
+        .createQuery("user")
+        .filter(new PropertyFilter("name", "=", name));
+      const [dbuser] = await DI.db.runQuery(query);
+      if (dbuser.length == 0) {
+        return res.status(400).json({ message: "user does not exist" });
+      }
 
-      user = {
-        key: `user#${name}`,
-        name: dbuser.data.name.value[0].value,
-        email: dbuser.data.email.value[0].value,
-        password: dbuser.data.password.value[0].value,
-        role: dbuser.data.role.value[0].value,
-      } as User;
+      user = dbuser[0];
 
       // save user to cache
-      await DI.redis.set(user.key, JSON.stringify(user), {
+      await DI.redis.set(`user#${name}`, JSON.stringify(user), {
         EX: 86400 * 7,
       });
     }
