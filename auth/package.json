@@ -4,9 +4,9 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "start": "node dist/src/index.js",
+    "start": "node dist/index.js",
     "build": "tsc",
-    "dev": "nodemon src/index.js",
+    "dev": "nodemon src/index.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
@@ -22,21 +22,14 @@
     "typescript": "^5.4.2"
   },
   "dependencies": {
-    "@mikro-orm/cli": "^6.1.9",
-    "@mikro-orm/core": "^6.1.9",
-    "@mikro-orm/entity-generator": "^6.1.9",
-    "@mikro-orm/migrations": "^6.1.9",
-    "@mikro-orm/postgresql": "^6.1.9",
-    "@mikro-orm/reflection": "^6.1.9",
+    "@google-cloud/bigtable": "^5.0.0",
     "@types/cors": "^2.8.17",
     "bcrypt": "^5.1.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "express": "^4.18.3",
     "jsonwebtoken": "^9.0.2",
+    "redis": "^4.6.13",
     "reflect-metadata": "^0.2.1"
-  },
-  "mikro-orm": {
-    "useTsNode": true
   }
 }

@@ -1,8 +1,20 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import { DI } from "..";
 import bcrypt from "bcrypt";
-import { UserRole } from "../entities/user.entity";
 import { sign, verify } from "jsonwebtoken";
+
+enum UserRole {
+  STUDENT = "student",
+  ADMIN = "admin",
+}
+
+interface User {
+  key: string;
+  name: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
 
 const router = Router();
 const SALT_ROUNDS = 15;
@@ -16,19 +28,54 @@ router.post("/create", async (req, res) => {
       .json({ message: "name/email/password is undefined" });
   }
 
+  // check if user already exists
   try {
+    const [user] = await DI.table.row(`user#${name}`).get();
+    if (user) {
+      return res.status(400).json({ message: "user already exists" });
+    }
+  } catch (e: any) {}
+
+  try {
+    // const timestamp = new Date().getTime() * 1000;
     const newUser = {
+      key: `user#${name}`,
       name,
       email,
       password: await bcrypt.hash(password, SALT_ROUNDS),
-      role: UserRole.USER,
+      role: UserRole.STUDENT,
+    } as User;
+
+    // insert into bigtable
+
+    const rowToInsert = {
+      key: newUser.key,
+      data: {
+        name: {
+          value: newUser.name,
+        },
+        email: {
+          value: newUser.email,
+        },
+        password: {
+          value: newUser.password,
+        },
+        role: {
+          value: newUser.role,
+        },
+      },
     };
 
-    const user = DI.user.create(newUser);
-    await DI.em.flush();
+    await DI.table.insert(rowToInsert);
 
-    return res.status(200).json({ message: "success" });
+    res.status(200).json({ message: "success" });
+
+    // cache the user to redis
+    await DI.redis.set(newUser.key, JSON.stringify(newUser), {
+      EX: 86400 * 7,
+    });
   } catch (e: any) {
+    console.error(e);
     return res.status(400).json({ message: e.message });
   }
 });
@@ -39,14 +86,37 @@ router.post("/normal", async (req, res) => {
     return res.status(400).json({ message: "name or password is undefined" });
   }
   try {
-    const user = await DI.user.findOneOrFail({ name });
+    let user: User;
+
+    // check if user is cached
+    const cachedUser = await DI.redis.get(`user#${name}`);
+
+    if (cachedUser) {
+      user = JSON.parse(cachedUser) as User;
+    } else {
+      const [dbuser] = await DI.table.row(`user#${name}`).get();
+
+      user = {
+        key: `user#${name}`,
+        name: dbuser.data.name.value[0].value,
+        email: dbuser.data.email.value[0].value,
+        password: dbuser.data.password.value[0].value,
+        role: dbuser.data.role.value[0].value,
+      } as User;
+
+      // save user to cache
+      await DI.redis.set(user.key, JSON.stringify(user), {
+        EX: 86400 * 7,
+      });
+    }
+
     const match = bcrypt.compare(password, user.password);
     if (!match) {
       return res.status(400).json({ message: "incorrect password" });
     }
     const authToken = sign(
       {
-        uuid: user.uuid,
+        uuid: user.key,
         name: user.name,
         role: user.role,
       },
@@ -64,7 +134,8 @@ router.post("/normal", async (req, res) => {
       })
       .send({ message: "success" });
   } catch (e: any) {
-    return res.status(400).json({ message: e.message });
+    console.error(e);
+    return res.status(400).json({ message: "user does not exist" });
   }
 });
 
